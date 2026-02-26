@@ -7,8 +7,6 @@ import {
   LayoutDashboard, 
   Users, 
   CalendarDays, 
-  Quote, 
-  Package, 
   Settings,
   Wind,
   LogOut
@@ -20,8 +18,6 @@ const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Schedule', href: '/schedule', icon: CalendarDays },
-  { name: 'Quotes', href: '/quotes', icon: Quote },
-  { name: 'Inventory', href: '/inventory', icon: Package },
 ];
 
 export function Sidebar() {

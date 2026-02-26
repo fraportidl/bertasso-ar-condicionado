@@ -68,7 +68,9 @@ const initialClients: Client[] = [
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -158,33 +160,37 @@ export default function ClientsPage() {
     }
   };
 
-  const handleDeleteClient = async (id: string) => {
-    if (confirm('Are you sure you want to delete this client?')) {
-      try {
-        if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-          const { error } = await supabase
-            .from('clients')
-            .delete()
-            .eq('id', id);
-          
-          // If the ID is not a UUID (like '1', '2' from mock data), 
-          // Supabase might return an error or just fail to delete.
-          // We should also handle local deletion for mock data.
-          if (error) {
-            console.warn('Supabase delete failed, trying local delete:', error);
-            setClients(prev => prev.filter(c => c.id !== id));
-          } else {
-            await fetchClients();
-          }
-        } else {
-          // Local-only mode
+  const handleDeleteClient = (id: string) => {
+    setClientToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+    
+    const id = clientToDelete;
+    try {
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        const { error } = await supabase
+          .from('clients')
+          .delete()
+          .eq('id', id);
+        
+        if (error) {
+          console.warn('Supabase delete failed, trying local delete:', error);
           setClients(prev => prev.filter(c => c.id !== id));
+        } else {
+          await fetchClients();
         }
-      } catch (error) {
-        console.error('Error deleting client:', error);
-        // Fallback to local delete if Supabase throws (e.g. missing keys)
+      } else {
         setClients(prev => prev.filter(c => c.id !== id));
       }
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      setClients(prev => prev.filter(c => c.id !== id));
+    } finally {
+      setIsDeleteModalOpen(false);
+      setClientToDelete(null);
     }
   };
 
@@ -506,6 +512,49 @@ export default function ClientsPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl"
+            >
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
+                <Trash2 size={28} />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-slate-900">Confirm Deletion</h3>
+              <p className="mb-8 text-slate-500">
+                Are you sure you want to delete this client? This action cannot be undone and all associated data will be removed.
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="flex-1 rounded-lg border border-slate-200 py-2.5 font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 rounded-lg bg-red-600 py-2.5 font-semibold text-white hover:bg-red-700"
+                >
+                  Delete Client
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
