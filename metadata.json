@@ -1,0 +1,5 @@
+{
+  "name": "HVAC Pro ERP",
+  "description": "A comprehensive operational suite for HVAC businesses, featuring dashboard analytics, service scheduling, client management, and inventory tracking.",
+  "requestFramePermissions": ["geolocation"]
+}
