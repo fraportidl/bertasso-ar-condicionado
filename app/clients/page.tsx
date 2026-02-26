@@ -217,10 +217,10 @@ export default function ClientsPage() {
       </div>
 
       {/* Summary Metrics Cards */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#135bec]/10 text-[#135bec]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#135bec]/10 text-[#135bec] md:h-12 md:w-12">
               <Users size={24} />
             </div>
             <span className="flex items-center gap-1 text-sm font-medium text-green-500">
@@ -229,12 +229,12 @@ export default function ClientsPage() {
             </span>
           </div>
           <p className="text-sm font-medium text-slate-500">Total Clients</p>
-          <h3 className="mt-1 text-2xl font-bold text-slate-900">{clients.length}</h3>
+          <h3 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">{clients.length}</h3>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 md:h-12 md:w-12">
               <ClipboardCheck size={24} />
             </div>
             <span className="flex items-center gap-1 text-sm font-medium text-green-500">
@@ -243,14 +243,14 @@ export default function ClientsPage() {
             </span>
           </div>
           <p className="text-sm font-medium text-slate-500">Active Maintenance</p>
-          <h3 className="mt-1 text-2xl font-bold text-slate-900">
+          <h3 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">
             {clients.filter(c => c.status === 'Active').length}
           </h3>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-2 lg:col-span-1 md:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 md:h-12 md:w-12">
               <Zap size={24} />
             </div>
             <span className="flex items-center gap-1 text-sm font-medium text-green-500">
@@ -259,37 +259,37 @@ export default function ClientsPage() {
             </span>
           </div>
           <p className="text-sm font-medium text-slate-500">New Leads (Month)</p>
-          <h3 className="mt-1 text-2xl font-bold text-slate-900">
+          <h3 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">
             {clients.filter(c => c.status === 'Lead').length}
           </h3>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 min-w-[200px]">
+      <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center">
+        <div className="flex flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5">
           <Search size={18} className="text-slate-400" />
           <input 
             type="text" 
             placeholder="Search clients..." 
-            className="bg-transparent border-none p-0 text-sm focus:ring-0 w-full"
+            className="w-full border-none bg-transparent p-0 text-sm focus:ring-0"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5">
-          <span className="text-xs font-semibold uppercase text-slate-500">Status:</span>
-          <select className="cursor-pointer border-none bg-transparent p-0 pr-8 text-sm font-medium focus:ring-0">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Inactive</option>
-            <option>Lead</option>
-          </select>
-        </div>
-        <div className="ml-auto">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5">
+            <span className="text-xs font-semibold uppercase text-slate-500">Status:</span>
+            <select className="cursor-pointer border-none bg-transparent p-0 pr-8 text-sm font-medium focus:ring-0">
+              <option>All Status</option>
+              <option>Active</option>
+              <option>Inactive</option>
+              <option>Lead</option>
+            </select>
+          </div>
           <button className="flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-[#135bec]">
             <Filter size={18} />
-            More Filters
+            <span className="hidden sm:inline">More Filters</span>
           </button>
         </div>
       </div>

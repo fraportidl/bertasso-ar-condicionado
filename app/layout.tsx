@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Inter, Manrope } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from '@/components/sidebar';
@@ -21,6 +22,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (isLoginPage) {
     return <>{children}</>;
@@ -32,10 +34,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-8">
+        <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {children}
         </main>
       </div>

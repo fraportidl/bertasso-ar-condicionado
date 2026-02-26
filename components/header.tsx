@@ -1,22 +1,32 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, Menu } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth-provider';
 
-export function Header() {
+interface HeaderProps {
+  onToggleSidebar: () => void;
+}
+
+export function Header({ onToggleSidebar }: HeaderProps) {
   const { user } = useAuth();
   const userName = user?.name || 'Alex Rivera';
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-8">
-      <div className="flex flex-1 items-center gap-4">
-        <h2 className="text-xl font-bold">Operational Dashboard</h2>
-        <div className="relative ml-4 w-full max-w-md">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8">
+      <div className="flex flex-1 items-center gap-2 md:gap-4">
+        <button 
+          onClick={onToggleSidebar}
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+        >
+          <Menu size={24} />
+        </button>
+        <h2 className="hidden text-xl font-bold md:block">Operational Dashboard</h2>
+        <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search invoices, clients..."
+            placeholder="Search..."
             className="w-full rounded-lg border-none bg-[#f6f6f8] py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#135bec]/20"
           />
         </div>
