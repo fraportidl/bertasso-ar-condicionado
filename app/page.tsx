@@ -23,50 +23,50 @@ import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
 
 const serviceDistribution = [
-  { name: 'Installation', value: 65, color: '#135bec' },
-  { name: 'Maintenance', value: 25, color: '#93c5fd' },
-  { name: 'Emergency', value: 10, color: '#f1f5f9' },
+  { name: 'Instalação', value: 65, color: '#135bec' },
+  { name: 'Manutenção', value: 25, color: '#93c5fd' },
+  { name: 'Emergência', value: 10, color: '#f1f5f9' },
 ];
 
 const upcomingServices = [
   {
-    client: "Riverside Hotel",
-    sub: "Suite 405",
-    type: "Full System Install",
-    time: "09:00 AM",
-    tech: "John Doe",
+    client: "Hotel Beira Rio",
+    sub: "Suíte 405",
+    type: "Instalação Completa",
+    time: "09:00",
+    tech: "João Silva",
     techImg: "https://picsum.photos/seed/john/40/40",
-    status: "Scheduled",
+    status: "Agendado",
     statusColor: "blue"
   },
   {
     client: "Sarah Jenkins",
-    sub: "Residential",
-    type: "AC Maintenance",
-    time: "10:30 AM",
-    tech: "Mike Ross",
+    sub: "Residencial",
+    type: "Manutenção de AC",
+    time: "10:30",
+    tech: "Miguel Rocha",
     techImg: "https://picsum.photos/seed/mike/40/40",
-    status: "En Route",
+    status: "A Caminho",
     statusColor: "yellow"
   },
   {
-    client: "Prime Office Park",
-    sub: "Bldg C",
-    type: "Emergency Repair",
-    time: "11:15 AM",
+    client: "Centro Comercial Prime",
+    sub: "Bloco C",
+    type: "Reparo de Emergência",
+    time: "11:15",
     tech: "Sara Tancredi",
     techImg: "https://picsum.photos/seed/sara/40/40",
-    status: "In Progress",
+    status: "Em Progresso",
     statusColor: "emerald"
   },
   {
-    client: "Downtown Library",
-    sub: "Main Hall",
-    type: "Filter Replacement",
-    time: "01:45 PM",
+    client: "Biblioteca Municipal",
+    sub: "Saguão Principal",
+    type: "Troca de Filtros",
+    time: "13:45",
     tech: "Kim Wexler",
     techImg: "https://picsum.photos/seed/kim/40/40",
-    status: "Scheduled",
+    status: "Agendado",
     statusColor: "blue"
   }
 ];
@@ -93,29 +93,29 @@ export default function Dashboard() {
 
   const metrics = [
     { 
-      label: "Today's Services", 
+      label: "Serviços Hoje", 
       value: "12", 
       change: "+2%", 
       icon: Wrench, 
       color: "blue" 
     },
     { 
-      label: "Pending Quotes", 
+      label: "Orçamentos Pendentes", 
       value: "28", 
       change: "+5%", 
       icon: Clock, 
       color: "orange" 
     },
     { 
-      label: "Total Clients", 
+      label: "Total de Clientes", 
       value: clientCount !== null ? clientCount.toString() : "...", 
       change: "+12%", 
       icon: UserCheck, 
       color: "purple" 
     },
     { 
-      label: "Monthly Revenue", 
-      value: "$42,500", 
+      label: "Receita Mensal", 
+      value: "R$ 42.500", 
       change: "+12%", 
       icon: DollarSign, 
       color: "emerald" 
@@ -160,7 +160,7 @@ export default function Dashboard() {
         {/* Service Distribution Chart */}
         <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-1">
           <div className="mb-6 flex items-center justify-between">
-            <h3 className="font-bold">Service Distribution</h3>
+            <h3 className="font-bold">Distribuição de Serviços</h3>
             <button className="text-slate-400 hover:text-slate-600">
               <MoreVertical size={20} />
             </button>
@@ -187,7 +187,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-2xl font-bold">120</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Jobs</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Serviços</span>
               </div>
             </div>
             <div className="w-full space-y-3">
@@ -207,17 +207,17 @@ export default function Dashboard() {
         {/* Upcoming Services Table */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 p-6">
-            <h3 className="font-bold">Upcoming Services Today</h3>
-            <button className="text-sm font-semibold text-[#135bec] hover:underline">View Calendar</button>
+            <h3 className="font-bold">Próximos Serviços Hoje</h3>
+            <button className="text-sm font-semibold text-[#135bec] hover:underline">Ver Agenda</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-6 py-3">Client</th>
-                  <th className="px-6 py-3">Service Type</th>
-                  <th className="px-6 py-3">Time</th>
-                  <th className="px-6 py-3">Technician</th>
+                  <th className="px-6 py-3">Cliente</th>
+                  <th className="px-6 py-3">Tipo de Serviço</th>
+                  <th className="px-6 py-3">Horário</th>
+                  <th className="px-6 py-3">Técnico</th>
                   <th className="px-6 py-3">Status</th>
                 </tr>
               </thead>
@@ -262,41 +262,14 @@ export default function Dashboard() {
           </div>
           <div className="bg-slate-50 p-4 text-center">
             <button className="text-sm font-medium text-slate-500 transition-colors hover:text-[#135bec]">
-              Load more services
+              Carregar mais serviços
             </button>
           </div>
         </div>
       </div>
 
       {/* Footer Stats & Map Hook */}
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="group relative overflow-hidden rounded-xl bg-[#135bec] p-8 text-white shadow-lg">
-          <div className="relative z-10">
-            <h3 className="mb-2 text-xl font-bold">Fleet Management</h3>
-            <p className="mb-6 max-w-xs text-sm text-white/80">
-              Real-time GPS tracking for all 15 active technicians currently in the field.
-            </p>
-            <button className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#135bec] shadow-sm transition-colors hover:bg-slate-50">
-              Open Live Map
-            </button>
-          </div>
-          <div className="absolute -bottom-4 -right-4 pointer-events-none opacity-20 transition-transform group-hover:scale-110">
-            <MapIcon size={160} />
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div>
-            <h3 className="mb-1 font-bold">Stock Alerts</h3>
-            <p className="text-sm text-slate-500">3 inventory items are below minimum threshold.</p>
-            <div className="mt-4 flex gap-2">
-              <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">R-410A Refrigerant</span>
-              <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600">HEPA Filters</span>
-            </div>
-          </div>
-          <Package size={48} className="text-slate-200" />
-        </div>
-      </div>
+      
     </div>
   );
 }

@@ -14,7 +14,10 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
-  X
+  X,
+  Plus,
+  Minus,
+  MapPin
 } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
@@ -22,44 +25,77 @@ import { motion, AnimatePresence } from 'motion/react';
 
 import { supabase } from '@/lib/supabase';
 
+interface Address {
+  id?: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  is_primary: boolean;
+}
+
 interface Client {
   id: string;
   name: string;
-  type: 'Commercial Account' | 'Residential';
+  cpf?: string;
+  type: 'Conta Comercial' | 'Residencial';
   phone: string;
   email: string;
-  address: string;
-  sub: string;
+  addresses: Address[];
   lastService?: string;
   serviceType?: string;
-  status: 'Active' | 'Inactive' | 'Lead';
+  status: 'Ativo' | 'Inativo' | 'Lead';
   img: string;
 }
 
 const initialClients: Client[] = [
   {
     id: '1',
-    name: "Johnathan Smith",
-    type: "Commercial Account",
-    phone: "(555) 123-4567",
-    email: "j.smith@corp.com",
-    address: "123 Industrial Way",
-    sub: "North Sector, 94043",
-    lastService: "Oct 12, 2023",
-    serviceType: "Maintenance Check",
-    status: "Active",
+    name: "João da Silva",
+    cpf: "123.456.789-00",
+    type: "Conta Comercial",
+    phone: "(11) 98765-4321",
+    email: "joao.silva@empresa.com.br",
+    addresses: [
+      {
+        street: "Av. Paulista",
+        number: "1000",
+        complement: "Sala 101",
+        neighborhood: "Bela Vista",
+        city: "São Paulo",
+        state: "SP",
+        zip_code: "01310-100",
+        is_primary: true
+      }
+    ],
+    lastService: "12 Out, 2023",
+    serviceType: "Revisão de Manutenção",
+    status: "Ativo",
     img: "https://picsum.photos/seed/johnathan/40/40"
   },
   {
     id: '2',
-    name: "Sarah Jenkins",
-    type: "Residential",
-    phone: "(555) 987-6543",
-    email: "sarah.j@email.com",
-    address: "45 Oak Street",
-    sub: "Pinecrest Estates",
-    lastService: "Sep 28, 2023",
-    serviceType: "AC Installation",
+    name: "Maria Oliveira",
+    type: "Residencial",
+    phone: "(21) 91234-5678",
+    email: "maria.o@email.com.br",
+    addresses: [
+      {
+        street: "Rua das Flores",
+        number: "45",
+        complement: "",
+        neighborhood: "Jardim Botânico",
+        city: "Rio de Janeiro",
+        state: "RJ",
+        zip_code: "22460-000",
+        is_primary: true
+      }
+    ],
+    lastService: "28 Set, 2023",
+    serviceType: "Instalação de AC",
     status: "Lead",
     img: "https://picsum.photos/seed/sarahj/40/40"
   }
@@ -73,6 +109,7 @@ export default function ClientsPage() {
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [modalAddresses, setModalAddresses] = useState<Address[]>([]);
 
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -82,22 +119,19 @@ export default function ClientsPage() {
   const fetchClients = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Check if supabase is configured before calling
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        throw new Error('Supabase not configured');
+        throw new Error('Supabase não configurado');
       }
 
       const { data, error } = await supabase
         .from('clients')
-        .select('*')
+        .select('*, addresses(*)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setClients(data || []);
     } catch (error) {
-      console.error('Error fetching clients:', error);
-      // Fallback to initial data if supabase fails or is not configured
-      // Only set if we don't have clients yet
+      console.error('Erro ao buscar clientes:', error);
       setClients(prev => prev.length > 0 ? prev : initialClients);
     } finally {
       setIsLoading(false);
@@ -111,42 +145,84 @@ export default function ClientsPage() {
   const handleSaveClient = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
     const clientData = {
       name: formData.get('name') as string,
+      cpf: formData.get('cpf') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
       type: formData.get('type') as any,
       status: formData.get('status') as any,
-      address: formData.get('address') as string,
-      sub: formData.get('sub') as string,
     };
+
+    // Extract addresses from form
+    const addresses: Address[] = [];
+    const streetInputs = formData.getAll('street') as string[];
+    const numberInputs = formData.getAll('number') as string[];
+    const complementInputs = formData.getAll('complement') as string[];
+    const neighborhoodInputs = formData.getAll('neighborhood') as string[];
+    const cityInputs = formData.getAll('city') as string[];
+    const stateInputs = formData.getAll('state') as string[];
+    const zipInputs = formData.getAll('zip_code') as string[];
+    const primaryIndex = parseInt(formData.get('primary_address_index') as string || '0');
+
+    streetInputs.forEach((street, index) => {
+      if (street) {
+        addresses.push({
+          street,
+          number: numberInputs[index],
+          complement: complementInputs[index],
+          neighborhood: neighborhoodInputs[index],
+          city: cityInputs[index],
+          state: stateInputs[index],
+          zip_code: zipInputs[index],
+          is_primary: index === primaryIndex
+        });
+      }
+    });
 
     try {
       if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        let clientId = editingClient?.id;
+
         if (editingClient) {
           const { error } = await supabase
             .from('clients')
             .update(clientData)
             .eq('id', editingClient.id);
           if (error) throw error;
+
+          // Delete old addresses and insert new ones (simple approach)
+          await supabase.from('addresses').delete().eq('client_id', clientId);
         } else {
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from('clients')
             .insert([{
               ...clientData,
               img: `https://picsum.photos/seed/${Math.random()}/40/40`
-            }]);
+            }])
+            .select();
           if (error) throw error;
+          clientId = data[0].id;
         }
+
+        if (clientId && addresses.length > 0) {
+          const { error: addrError } = await supabase
+            .from('addresses')
+            .insert(addresses.map(addr => ({ ...addr, client_id: clientId })));
+          if (addrError) throw addrError;
+        }
+
         await fetchClients();
       } else {
         // Local-only mode
+        const newClientData = { ...clientData, addresses };
         if (editingClient) {
-          setClients(prev => prev.map(c => c.id === editingClient.id ? { ...c, ...clientData } : c));
+          setClients(prev => prev.map(c => c.id === editingClient.id ? { ...c, ...newClientData } : c));
         } else {
           const newClient: Client = {
             id: Math.random().toString(36).substr(2, 9),
-            ...clientData,
+            ...newClientData,
             img: `https://picsum.photos/seed/${Math.random()}/40/40`
           };
           setClients(prev => [newClient, ...prev]);
@@ -155,8 +231,8 @@ export default function ClientsPage() {
       setIsModalOpen(false);
       setEditingClient(null);
     } catch (error) {
-      console.error('Error saving client:', error);
-      alert('Failed to save client. Check console for details.');
+      console.error('Erro ao salvar cliente:', error);
+      alert('Falha ao salvar cliente. Verifique o console para detalhes.');
     }
   };
 
@@ -186,7 +262,7 @@ export default function ClientsPage() {
         setClients(prev => prev.filter(c => c.id !== id));
       }
     } catch (error) {
-      console.error('Error deleting client:', error);
+      console.error('Erro ao excluir cliente:', error);
       setClients(prev => prev.filter(c => c.id !== id));
     } finally {
       setIsDeleteModalOpen(false);
@@ -196,7 +272,37 @@ export default function ClientsPage() {
 
   const openEditModal = (client: Client) => {
     setEditingClient(client);
+    setModalAddresses(client.addresses || []);
     setIsModalOpen(true);
+  };
+
+  const addAddressField = () => {
+    setModalAddresses([...modalAddresses, {
+      street: '',
+      number: '',
+      complement: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      is_primary: modalAddresses.length === 0
+    }]);
+  };
+
+  const removeAddressField = (index: number) => {
+    const newAddresses = modalAddresses.filter((_, i) => i !== index);
+    // Ensure at least one is primary if list is not empty
+    if (newAddresses.length > 0 && !newAddresses.some(a => a.is_primary)) {
+      newAddresses[0].is_primary = true;
+    }
+    setModalAddresses(newAddresses);
+  };
+
+  const setPrimaryAddress = (index: number) => {
+    setModalAddresses(modalAddresses.map((addr, i) => ({
+      ...addr,
+      is_primary: i === index
+    })));
   };
 
   return (
@@ -205,14 +311,14 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Gestão de Clientes</h2>
-          <p className="text-slate-500">Manage your customer database and service history</p>
+          <p className="text-slate-500">Gerencie sua base de clientes e histórico de serviços</p>
         </div>
         <button 
           onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
           className="flex items-center gap-2 rounded-lg bg-[#135bec] px-6 py-2.5 font-semibold text-white transition-colors hover:bg-[#135bec]/90"
         >
           <UserPlus size={20} />
-          New Client
+          Novo Cliente
         </button>
       </div>
 
@@ -228,7 +334,7 @@ export default function ClientsPage() {
               +12%
             </span>
           </div>
-          <p className="text-sm font-medium text-slate-500">Total Clients</p>
+          <p className="text-sm font-medium text-slate-500">Total de Clientes</p>
           <h3 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">{clients.length}</h3>
         </div>
 
@@ -242,9 +348,9 @@ export default function ClientsPage() {
               +5%
             </span>
           </div>
-          <p className="text-sm font-medium text-slate-500">Active Maintenance</p>
+          <p className="text-sm font-medium text-slate-500">Manutenções Ativas</p>
           <h3 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">
-            {clients.filter(c => c.status === 'Active').length}
+            {clients.filter(c => c.status === 'Ativo').length}
           </h3>
         </div>
 
@@ -258,7 +364,7 @@ export default function ClientsPage() {
               +18%
             </span>
           </div>
-          <p className="text-sm font-medium text-slate-500">New Leads (Month)</p>
+          <p className="text-sm font-medium text-slate-500">Novos Leads (Mês)</p>
           <h3 className="mt-1 text-xl font-bold text-slate-900 md:text-2xl">
             {clients.filter(c => c.status === 'Lead').length}
           </h3>
@@ -271,7 +377,7 @@ export default function ClientsPage() {
           <Search size={18} className="text-slate-400" />
           <input 
             type="text" 
-            placeholder="Search clients..." 
+            placeholder="Buscar clientes..." 
             className="w-full border-none bg-transparent p-0 text-sm focus:ring-0"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -281,15 +387,15 @@ export default function ClientsPage() {
           <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5">
             <span className="text-xs font-semibold uppercase text-slate-500">Status:</span>
             <select className="cursor-pointer border-none bg-transparent p-0 pr-8 text-sm font-medium focus:ring-0">
-              <option>All Status</option>
-              <option>Active</option>
-              <option>Inactive</option>
+              <option>Todos</option>
+              <option>Ativo</option>
+              <option>Inativo</option>
               <option>Lead</option>
             </select>
           </div>
           <button className="flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-[#135bec]">
             <Filter size={18} />
-            <span className="hidden sm:inline">More Filters</span>
+            <span className="hidden sm:inline">Mais Filtros</span>
           </button>
         </div>
       </div>
@@ -300,12 +406,12 @@ export default function ClientsPage() {
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Client Name</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Contact Info</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Address</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Last Service</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Nome do Cliente</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Contato</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Endereço</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Último Serviço</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -333,8 +439,18 @@ export default function ClientsPage() {
                     <p className="text-xs text-slate-500">{client.email}</p>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
-                    <p className="text-sm text-slate-600">{client.address}</p>
-                    <p className="text-xs text-slate-500">{client.sub}</p>
+                    {client.addresses?.find(a => a.is_primary) ? (
+                      <>
+                        <p className="text-sm text-slate-600">
+                          {client.addresses.find(a => a.is_primary)?.street}, {client.addresses.find(a => a.is_primary)?.number}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {client.addresses.find(a => a.is_primary)?.neighborhood}, {client.addresses.find(a => a.is_primary)?.city}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">Nenhum endereço</p>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <p className="text-sm text-slate-600">{client.lastService}</p>
@@ -342,7 +458,7 @@ export default function ClientsPage() {
                   </td>
                   <td className="whitespace-nowrap px-6 py-4">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      client.status === 'Active' ? 'bg-green-100 text-green-800' :
+                      client.status === 'Ativo' ? 'bg-green-100 text-green-800' :
                       client.status === 'Lead' ? 'bg-amber-100 text-amber-800' :
                       'bg-slate-100 text-slate-800'
                     }`}>
@@ -371,7 +487,7 @@ export default function ClientsPage() {
           </table>
         </div>
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
-          <p className="text-sm text-slate-500">Showing {filteredClients.length} of {clients.length} clients</p>
+          <p className="text-sm text-slate-500">Exibindo {filteredClients.length} de {clients.length} clientes</p>
           <div className="flex gap-2">
             <button className="rounded border border-slate-300 p-1.5 text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50" disabled>
               <ChevronLeft size={20} />
@@ -402,7 +518,7 @@ export default function ClientsPage() {
             >
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-xl font-bold text-slate-900">
-                  {editingClient ? 'Edit Client' : 'Add New Client'}
+                  {editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
                 </h3>
                 <button 
                   onClick={() => setIsModalOpen(false)}
@@ -412,75 +528,64 @@ export default function ClientsPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveClient} className="space-y-4">
+              <form onSubmit={handleSaveClient} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Full Name</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Nome Completo</label>
                     <input 
                       name="name"
                       required
                       defaultValue={editingClient?.name}
                       className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
-                      placeholder="e.g. John Doe"
+                      placeholder="Ex: João Silva"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Email Address</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">CPF (Opcional)</label>
+                    <input 
+                      name="cpf"
+                      defaultValue={editingClient?.cpf}
+                      className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">E-mail</label>
                     <input 
                       name="email"
                       type="email"
                       required
                       defaultValue={editingClient?.email}
                       className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
-                      placeholder="john@example.com"
+                      placeholder="joao@exemplo.com"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Phone Number</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Telefone</label>
                     <input 
                       name="phone"
                       required
                       defaultValue={editingClient?.phone}
                       className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
-                      placeholder="(555) 000-0000"
+                      placeholder="(11) 99999-9999"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Client Type</label>
-                    <select 
-                      name="type"
-                      defaultValue={editingClient?.type || 'Residential'}
-                      className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
-                    >
-                      <option value="Residential">Residential</option>
-                      <option value="Commercial Account">Commercial Account</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-500">Address</label>
-                  <input 
-                    name="address"
-                    required
-                    defaultValue={editingClient?.address}
-                    className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
-                    placeholder="123 Main St"
-                  />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Neighborhood / Suite</label>
-                    <input 
-                      name="sub"
-                      defaultValue={editingClient?.sub}
+                    <label className="text-xs font-bold uppercase text-slate-500">Tipo de Cliente</label>
+                    <select 
+                      name="type"
+                      defaultValue={editingClient?.type || 'Residencial'}
                       className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
-                      placeholder="e.g. Suite 101"
-                    />
+                    >
+                      <option value="Residencial">Residencial</option>
+                      <option value="Conta Comercial">Conta Comercial</option>
+                    </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Status</label>
@@ -489,11 +594,129 @@ export default function ClientsPage() {
                       defaultValue={editingClient?.status || 'Lead'}
                       className="w-full rounded-lg border border-slate-200 px-4 py-2 text-sm focus:ring-2 focus:ring-[#135bec]/20"
                     >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
+                      <option value="Ativo">Ativo</option>
+                      <option value="Inativo">Inativo</option>
                       <option value="Lead">Lead</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <MapPin size={16} className="text-[#135bec]" />
+                      Endereços
+                    </h4>
+                    <button 
+                      type="button"
+                      onClick={addAddressField}
+                      className="text-xs font-bold text-[#135bec] hover:underline flex items-center gap-1"
+                    >
+                      <Plus size={14} />
+                      Adicionar Endereço
+                    </button>
+                  </div>
+
+                  {modalAddresses.map((addr, index) => (
+                    <div key={index} className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name="primary_address_index" 
+                            value={index}
+                            checked={addr.is_primary}
+                            onChange={() => setPrimaryAddress(index)}
+                            className="h-4 w-4 text-[#135bec] focus:ring-[#135bec]"
+                          />
+                          <span className="text-xs font-bold text-slate-600">Endereço Principal</span>
+                        </label>
+                        {modalAddresses.length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => removeAddressField(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Minus size={16} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="sm:col-span-2 space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">Rua</label>
+                          <input 
+                            name="street"
+                            required
+                            defaultValue={addr.street}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="Rua..."
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">Número</label>
+                          <input 
+                            name="number"
+                            defaultValue={addr.number}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="123"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">Complemento</label>
+                          <input 
+                            name="complement"
+                            defaultValue={addr.complement}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="Apto, Sala..."
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">Bairro</label>
+                          <input 
+                            name="neighborhood"
+                            defaultValue={addr.neighborhood}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="Bairro"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">Cidade</label>
+                          <input 
+                            name="city"
+                            defaultValue={addr.city}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="Cidade"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">Estado</label>
+                          <input 
+                            name="state"
+                            defaultValue={addr.state}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="SP"
+                            maxLength={2}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-slate-400">CEP</label>
+                          <input 
+                            name="zip_code"
+                            defaultValue={addr.zip_code}
+                            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                            placeholder="00000-000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="mt-8 flex gap-3">
@@ -502,13 +725,13 @@ export default function ClientsPage() {
                     onClick={() => setIsModalOpen(false)}
                     className="flex-1 rounded-lg border border-slate-200 py-2.5 font-semibold text-slate-600 hover:bg-slate-50"
                   >
-                    Cancel
+                    Cancelar
                   </button>
                   <button 
                     type="submit"
                     className="flex-1 rounded-lg bg-[#135bec] py-2.5 font-semibold text-white hover:bg-[#135bec]/90"
                   >
-                    {editingClient ? 'Save Changes' : 'Create Client'}
+                    {editingClient ? 'Salvar Alterações' : 'Criar Cliente'}
                   </button>
                 </div>
               </form>
@@ -537,22 +760,22 @@ export default function ClientsPage() {
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-600">
                 <Trash2 size={28} />
               </div>
-              <h3 className="mb-2 text-xl font-bold text-slate-900">Confirm Deletion</h3>
+              <h3 className="mb-2 text-xl font-bold text-slate-900">Confirmar Exclusão</h3>
               <p className="mb-8 text-slate-500">
-                Are you sure you want to delete this client? This action cannot be undone and all associated data will be removed.
+                Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita e todos os dados associados serão removidos.
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setIsDeleteModalOpen(false)}
                   className="flex-1 rounded-lg border border-slate-200 py-2.5 font-semibold text-slate-600 hover:bg-slate-50"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button 
                   onClick={confirmDelete}
                   className="flex-1 rounded-lg bg-red-600 py-2.5 font-semibold text-white hover:bg-red-700"
                 >
-                  Delete Client
+                  Excluir Cliente
                 </button>
               </div>
             </motion.div>

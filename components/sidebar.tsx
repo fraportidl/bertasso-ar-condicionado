@@ -17,9 +17,9 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 const navItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Clients', href: '/clients', icon: Users },
-  { name: 'Schedule', href: '/schedule', icon: CalendarDays },
+  { name: 'Painel', href: '/', icon: LayoutDashboard },
+  { name: 'Clientes', href: '/clients', icon: Users },
+  { name: 'Agenda', href: '/schedule', icon: CalendarDays },
 ];
 
 interface SidebarProps {
@@ -40,7 +40,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           <div>
             <h1 className="text-lg font-bold leading-none">HVAC Pro</h1>
-            <p className="text-xs text-slate-500">Operational Suite</p>
+            <p className="text-xs text-slate-500">Gestão Operacional</p>
           </div>
         </div>
         <button 
@@ -87,14 +87,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}
         >
           <Settings size={20} />
-          Settings
+          Configurações
         </Link>
         <button
           onClick={logout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
         >
           <LogOut size={20} />
-          Logout
+          Sair
         </button>
       </div>
     </div>

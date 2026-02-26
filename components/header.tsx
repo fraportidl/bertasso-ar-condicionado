@@ -21,12 +21,12 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         >
           <Menu size={24} />
         </button>
-        <h2 className="hidden text-xl font-bold md:block">Operational Dashboard</h2>
+        <h2 className="hidden text-xl font-bold md:block">Painel Operacional</h2>
         <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Buscar..."
             className="w-full rounded-lg border-none bg-[#f6f6f8] py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#135bec]/20"
           />
         </div>
@@ -43,7 +43,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         <div className="flex items-center gap-3">
           <div className="hidden text-right sm:block">
             <p className="text-sm font-semibold leading-none">{userName}</p>
-            <p className="text-xs text-slate-500">Ops Manager</p>
+            <p className="text-xs text-slate-500">Gerente de Operações</p>
           </div>
           <div className="relative h-10 w-10 overflow-hidden rounded-full bg-slate-200">
             <Image
